@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        :root {
+            --bg-main: #030816;
+            --primary-neon: #00ffa3;
+            --accent-gold: #ffcc00;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --border-glow: rgba(0, 255, 163, 0.2);
+            --text-main: #ffffff;
+            --text-dim: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 255, 163, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(0, 209, 255, 0.08) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .main-card {
+            width: 100%;
+            max-width: 1000px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(50px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 50px;
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        /* Clock & Dates */
+        .time-display {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        #liveTime {
+            font-size: 100px;
+            font-weight: 800;
+            letter-spacing: -5px;
+            background: linear-gradient(to bottom, #fff, #64748b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+        }
+
+        .date-row {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .date-chip {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 8px 20px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chip-hijri { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .chip-kw { border-color: var(--primary-neon); color: var(--primary-neon); }
+
+        /* Holiday Banner */
+        .holiday-box {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border-left: 4px solid #ff4d4d;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 30px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Prayer Nodes */
+        .prayer-track {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 15px;
+            margin-top: 40px;
+        }
+
+        .p-node {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 25px;
+            padding: 25px 10px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .p-node.active {
+            background: rgba(0, 255, 163, 0.08);
+            border-color: var(--primary-neon);
+            box-shadow: 0 10px 30px rgba(0, 255, 163, 0.15);
+            transform: scale(1.05);
+        }
+
+        .p-node .label { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .p-node .time { font-size: 20px; font-weight: 800; margin-top: 8px; }
+
+        @media (max-width: 850px) {
+            .prayer-track { grid-template-columns: repeat(3, 1fr); }
+            body { overflow-y: auto; padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-card" id="mainCard">
+    <div class="time-display">
+        <div id="liveTime">00:00:00</div>
+        <div class="date-row">
+            <div class="date-chip" id="gregDate">--. --. ----</div>
+            <div class="date-chip chip-hijri" id="hijriDate">--. --. ----</div>
+            <div class="date-chip chip-kw" id="kwDisplay">KW --</div>
+        </div>
+    </div>
+
+    <div class="holiday-box">
+        <div class="d-flex align-items-center gap-3">
+            <div class="icon-circle bg-danger bg-opacity-10 p-3 rounded-circle">
+                <i class="bi bi-calendar-event-fill text-danger"></i>
+            </div>
+            <div>
+                <div style="font-size: 12px; color: var(--text-dim);">Nächster Feiertag (NRW)</div>
+                <div id="holidayName" style="font-weight: 800; font-size: 18px;">Laden...</div>
+            </div>
+        </div>
+        <div id="holidayCountdown" style="font-weight: 800; color: #ff4d4d; font-size: 20px;">-- Tage</div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <span style="font-size: 12px; letter-spacing: 3px; color: var(--text-dim); text-transform: uppercase;">Verbleibend bis <span id="nextPName" style="color:var(--primary-neon)">...</span></span>
+        <div id="countdown" style="font-size: 45px; font-weight: 800; color: var(--primary-neon);">00:00:00</div>
+    </div>
+
+    <div class="prayer-track" id="nodes"></div>
+</div>
+
+<script>
+    const CONFIG = { lat: 51.4556, lon: 7.0116, method: 3 };
+    let prayerData = {};
+    let nextP = { name: '', time: null };
+    let currentKW = 0;
+
+    const HIJRI_MONTHS_DE = [
+        "Muharram", "Safar", "Rabi' al-awwal", "Rabi' ath-thani", 
+        "Jumada al-ula", "Jumada al-akhira", "Rajab", "Sha'ban", 
+        "Ramadan", "Shawwal", "Dhu al-Qi'dah", "Dhu al-Hijjah"
+    ];
+
+    async function init() {
+        await fetchPrayers();
+        updateHoliday();
+        setInterval(tick, 1000);
+    }
+
+    async function fetchPrayers() {
+        const r = await fetch(`https://api.aladhan.com/v1/timings?latitude=${CONFIG.lat}&longitude=${CONFIG.lon}&method=${CONFIG.method}`);
+        const d = await r.json();
+        prayerData = d.data.timings;
+        
+        // Hijri Date
+        const h = d.data.date.hijri;
+        document.getElementById('hijriDate').innerText = `${h.day}. ${HIJRI_MONTHS_DE[parseInt(h.month.number)-1]} ${h.year}`;
+        
+        renderGrid();
+        calcNext();
+    }
+
+    function renderGrid() {
+        const nodes = document.getElementById('nodes');
+        const keys = { Fajr: "Fajr", Sunrise: "Aufgang", Dhuhr: "Dhuhr", Asr: "Asr", Maghrib: "Maghrib", Isha: "Isha" };
+        nodes.innerHTML = '';
+        Object.entries(keys).forEach(([key, val]) => {
+            nodes.innerHTML += `
+                <div class="p-node" id="node-${key}">
+                    <div class="label">${val}</div>
+                    <div class="time">${prayerData[key]}</div>
+                </div>
+            `;
+        });
+    }
+
+    function calcNext() {
+        const now = new Date();
+        const keys = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+        let found = false;
+        for (let k of keys) {
+            let [h, m] = prayerData[k].split(':');
+            let p = new Date(); p.setHours(h, m, 0);
+            if (p > now) { nextP = { name: k, time: p }; found = true; break; }
+        }
+        if (!found) {
+            let [h, m] = prayerData.Fajr.split(':');
+            let t = new Date(); t.setDate(now.getDate()+1); t.setHours(h, m, 0);
+            nextP = { name: 'Fajr', time: t };
+        }
+        document.querySelectorAll('.p-node').forEach(n => n.classList.remove('active'));
+        document.getElementById(`node-${nextP.name}`).classList.add('active');
+        document.getElementById('nextPName').innerText = nextP.name;
+    }
+
+    function tick() {
+        const now = new Date();
+        document.getElementById('liveTime').innerText = now.toLocaleTimeString('de-DE');
+        document.getElementById('gregDate').innerText = now.toLocaleDateString('de-DE', { weekday:'long', day:'2-digit', month:'long'});
+        
+        // KW Calculation
+        const target = new Date(now.valueOf());
+        const dayNr = (now.getDay() + 6) % 7;
+        target.setDate(target.getDate() - dayNr + 3);
+        const firstThursday = target.valueOf();
+        target.setMonth(0, 1);
+        if (target.getDay() !== 4) target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+        currentKW = 1 + Math.ceil((firstThursday - target) / 604800000);
+        document.getElementById('kwDisplay').innerText = `KW ${currentKW}`;
+
+        // Countdown
+        const diff = nextP.time - now;
+        const h = Math.floor(diff/3600000).toString().padStart(2,'0');
+        const m = Math.floor((diff%3600000)/60000).toString().padStart(2,'0');
+        const s = Math.floor((diff%60000)/1000).toString().padStart(2,'0');
+        const timeStr = `${h}:${m}:${s}`;
+        document.getElementById('countdown').innerText = timeStr;
+
+        // Browser Tab Update
+        document.title = `[KW ${currentKW}] | ${nextP.name} ${timeStr}`;
+
+        if (diff <= 0) fetchPrayers();
+    }
+
+    function updateHoliday() {
+        // العطل الرسمية المعتمدة لولاية شمال الراين (NRW) لعام 2026
+        const holidays = [
+            { n: "Neujahr", d: "2026-01-01" },
+            { n: "Karfreitag", d: "2026-04-03" },
+            { n: "Ostermontag", d: "2026-04-06" },
+            { n: "Tag der Arbeit", d: "2026-05-01" },
+            { n: "Christi Himmelfahrt", d: "2026-05-14" },
+            { n: "Pfingstmontag", d: "2026-05-25" },
+            { n: "Fronleichnam", d: "2026-06-04" }, // عطلة رسمية خاصة بـ NRW وولايات محددة أخرى
+            { n: "Allerheiligen", d: "2026-11-01" }, // عطلة رسمية خاصة بـ NRW وولايات محددة أخرى
+            { n: "Tag der Deutschen Einheit", d: "2026-10-03" },
+            { n: "1. Weihnachtstag", d: "2026-12-25" },
+            { n: "2. Weihnachtstag", d: "2026-12-26" }
+        ];
+
+        // ترتيب العطلات لضمان الفرز الصحيح
+        holidays.sort((a, b) => new Date(a.d) - new Date(b.d));
+
+        const now = new Date();
+        const next = holidays.find(h => new Date(h.d + "T23:59:59") > now);
+        
+        if (next) {
+            const holidayDate = new Date(next.d);
+            // حساب الأيام المتبقية بدقة
+            const diffTime = holidayDate.setHours(0,0,0,0) - now.setHours(0,0,0,0);
+            const diffDays = Math.ceil(diffTime / 86400000);
+
+            document.getElementById('holidayName').innerText = next.n;
+            if (diffDays === 0) {
+                document.getElementById('holidayCountdown').innerText = `Heute`;
+            } else {
+                document.getElementById('holidayCountdown').innerText = `${diffDays} Tage`;
+            }
+        } else {
+            document.getElementById('holidayName').innerText = "Keine weiteren Feiertage";
+            document.getElementById('holidayCountdown').innerText = "--";
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>
